@@ -9,15 +9,40 @@ It was created to replace the `@mermaid-js/mermaid-cli` dependency in [@akashacm
 ```
 Cargo.toml                  wasm-bindgen wrapper crate
 src/lib.rs                  JS-facing API: renderSvg, renderSvgWithConfig, registerFont
-vendor/mermaid-rs-renderer/ vendored clone of the upstream renderer (patched, see below)
+patches/                    WASM-support patch for the upstream renderer (see below)
+vendor/mermaid-rs-renderer/ clone of the upstream renderer (not committed; see setup)
 pkg/                        build output: the npm package (wasm + JS glue + .d.ts)
 test/smoke.mjs              Node.js smoke test
 README-npm.md               source of pkg/README.md (the npm-facing README)
 ```
 
-## Patches applied to the vendored crate
+## Setting up the renderer source
 
-The upstream crate compiles for `wasm32-unknown-unknown` almost unmodified. Three small changes were needed, all candidates for upstreaming:
+The upstream renderer is not committed to this repository. Clone it yourself, either inside this directory or as a sibling, then apply the WASM-support patch.
+
+**Option A — clone inside this directory** (the location `Cargo.toml` expects):
+
+```sh
+git clone https://github.com/1jehuang/mermaid-rs-renderer vendor/mermaid-rs-renderer
+git -C vendor/mermaid-rs-renderer checkout e4b4987   # known-good commit for the patch
+git -C vendor/mermaid-rs-renderer apply "$(pwd)/patches/mermaid-rs-renderer-wasm.patch"
+```
+
+**Option B — clone as a sibling directory**, then symlink it into place:
+
+```sh
+git clone https://github.com/1jehuang/mermaid-rs-renderer ../mermaid-rs-renderer
+git -C ../mermaid-rs-renderer checkout e4b4987
+git -C ../mermaid-rs-renderer apply "$(pwd)/patches/mermaid-rs-renderer-wasm.patch"
+mkdir -p vendor
+ln -s ../../mermaid-rs-renderer vendor/mermaid-rs-renderer
+```
+
+The `checkout e4b4987` pin is the commit the patch was generated against; upstream moves quickly, so the patch may need rebasing on newer commits (`git apply --3way` usually resolves it).
+
+## Patches applied to the renderer
+
+The upstream crate compiles for `wasm32-unknown-unknown` almost unmodified. `patches/mermaid-rs-renderer-wasm.patch` contains the three small changes that were needed, all candidates for upstreaming:
 
 1. **`src/timing.rs` (new) + import changes** — `std::time::Instant::now()` panics at runtime on `wasm32-unknown-unknown`, and it was used for stage-timing metrics inside the layout path (`layout/mod.rs`, `layout/flowchart/edge_pipeline.rs`, `lib.rs`). The shim re-exports `std::time::Instant` on native targets and substitutes a zero-duration stub on wasm.
 

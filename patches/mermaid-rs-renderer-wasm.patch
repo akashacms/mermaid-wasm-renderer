@@ -1,0 +1,181 @@
+diff --git a/src/config.rs b/src/config.rs
+index a0f21e9..5c4b1a4 100644
+--- a/src/config.rs
++++ b/src/config.rs
+@@ -1505,17 +1505,9 @@ pub fn load_config_with_theme(
+     path: Option<&Path>,
+     cli_theme: Option<&str>,
+ ) -> anyhow::Result<Config> {
+-    let mut config = Config::default();
+-    let cli_theme = match cli_theme {
+-        Some(name) => Some(Theme::from_name(name).ok_or_else(|| {
+-            anyhow::anyhow!(
+-                "unknown theme preset '{name}' (expected one of: default, dark, forest, neutral, modern)"
+-            )
+-        })?),
+-        None => None,
+-    };
+     let Some(path) = path else {
+-        if let Some(theme) = cli_theme {
++        let mut config = Config::default();
++        if let Some(theme) = parse_theme_preset(cli_theme)? {
+             config.theme = theme;
+             config.render.background = config.theme.background.clone();
+         }
+@@ -1523,7 +1515,28 @@ pub fn load_config_with_theme(
+     };
+ 
+     let contents = std::fs::read_to_string(path)?;
+-    let parsed: ConfigFile = serde_json::from_str(&contents)?;
++    config_from_str(&contents, cli_theme)
++}
++
++fn parse_theme_preset(cli_theme: Option<&str>) -> anyhow::Result<Option<Theme>> {
++    match cli_theme {
++        Some(name) => Ok(Some(Theme::from_name(name).ok_or_else(|| {
++            anyhow::anyhow!(
++                "unknown theme preset '{name}' (expected one of: default, dark, forest, neutral, modern)"
++            )
++        })?)),
++        None => Ok(None),
++    }
++}
++
++/// Parse configuration from a JSON string using the same schema as the
++/// `--config` file. `cli_theme` optionally names a theme preset that takes
++/// precedence over the config's `theme` name but is applied before
++/// `themeVariables`.
++pub fn config_from_str(contents: &str, cli_theme: Option<&str>) -> anyhow::Result<Config> {
++    let mut config = Config::default();
++    let cli_theme = parse_theme_preset(cli_theme)?;
++    let parsed: ConfigFile = serde_json::from_str(contents)?;
+ 
+     if let Some(theme_name) = parsed.theme.as_deref()
+         && let Some(theme) = Theme::from_name(theme_name)
+diff --git a/src/layout/flowchart/edge_pipeline.rs b/src/layout/flowchart/edge_pipeline.rs
+index 127f27b..4bfcecf 100644
+--- a/src/layout/flowchart/edge_pipeline.rs
++++ b/src/layout/flowchart/edge_pipeline.rs
+@@ -1,6 +1,6 @@
+ use std::cmp::Ordering;
+ use std::collections::{BTreeMap, HashMap};
+-use std::time::Instant;
++use crate::timing::Instant;
+ 
+ use crate::config::LayoutConfig;
+ use crate::ir::{DiagramKind, Graph};
+diff --git a/src/layout/mod.rs b/src/layout/mod.rs
+index 5a37768..ed02c00 100644
+--- a/src/layout/mod.rs
++++ b/src/layout/mod.rs
+@@ -58,7 +58,7 @@ use crate::theme::{Theme, adjust_color, parse_color_to_hsl};
+ use std::borrow::Cow;
+ use std::cmp::Ordering;
+ use std::collections::{BTreeMap, HashMap, HashSet};
+-use std::time::Instant;
++use crate::timing::Instant;
+ 
+ // Label placement padding (resolved per diagram kind).
+ // Minimum padding around the entire layout bounding box.
+diff --git a/src/lib.rs b/src/lib.rs
+index 9cc189f..f703be1 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -100,6 +100,7 @@ pub mod parser;
+ pub mod render;
+ mod text_metrics;
+ pub mod theme;
++pub mod timing;
+ pub(crate) mod unicode_width;
+ pub mod validator;
+ 
+@@ -119,6 +120,7 @@ pub use parser::{ParseOutput, parse_mermaid};
+ #[cfg(feature = "png")]
+ pub use render::write_output_png;
+ pub use render::{SvgDimensions, measure_svg_dimensions, render_svg, write_output_svg};
++pub use text_metrics::register_font_data;
+ pub use theme::Theme;
+ 
+ /// Options for the high-level `render` function.
+@@ -362,7 +364,7 @@ pub fn render_with_detailed_timing(
+     input: &str,
+     options: RenderOptions,
+ ) -> anyhow::Result<RenderDetailedResult> {
+-    use std::time::Instant;
++    use crate::timing::Instant;
+ 
+     let t0 = Instant::now();
+     let parsed = parse_mermaid(input)?;
+diff --git a/src/text_metrics.rs b/src/text_metrics.rs
+index 92b6bf7..a317c30 100644
+--- a/src/text_metrics.rs
++++ b/src/text_metrics.rs
+@@ -12,6 +12,38 @@ use crate::unicode_width::{Cluster, consume_cluster, is_cjk_wide_char};
+ static TEXT_MEASURER: Lazy<Mutex<TextMeasurer>> = Lazy::new(|| Mutex::new(TextMeasurer::new()));
+ const FONT_CACHE_VERSION: &str = "v2-font-family-case";
+ 
++/// Register in-memory font bytes (TTF/OTF) for text measurement.
++///
++/// On platforms without system font access (e.g. `wasm32-unknown-unknown`)
++/// this is the only way to provide real font metrics; without it, layout
++/// falls back to calibrated approximate widths.
++///
++/// The first registered font also becomes the target of the generic CSS
++/// families (`sans-serif`, `monospace`, ...) so that themes referencing
++/// only generic families resolve to a real face.
++pub fn register_font_data(data: Vec<u8>) {
++    let Ok(mut guard) = TEXT_MEASURER.lock() else {
++        return;
++    };
++    let first_font = guard.db.is_empty();
++    guard.db.load_font_data(data);
++    if first_font {
++        let family = guard
++            .db
++            .faces()
++            .next()
++            .and_then(|face| face.families.first().map(|(name, _)| name.clone()));
++        if let Some(family) = family {
++            guard.db.set_sans_serif_family(family.clone());
++            guard.db.set_serif_family(family.clone());
++            guard.db.set_monospace_family(family.clone());
++            guard.db.set_cursive_family(family.clone());
++            guard.db.set_fantasy_family(family);
++        }
++    }
++    guard.cache.clear();
++}
++
+ pub fn measure_text_width(text: &str, font_size: f32, font_family: &str) -> Option<f32> {
+     if text.is_empty() || font_size <= 0.0 {
+         return Some(0.0);
+diff --git a/src/timing.rs b/src/timing.rs
+new file mode 100644
+index 0000000..63cbbca
+--- /dev/null
++++ b/src/timing.rs
+@@ -0,0 +1,24 @@
++//! Monotonic clock shim.
++//!
++//! `std::time::Instant::now()` panics at runtime on
++//! `wasm32-unknown-unknown` ("time not implemented on this platform").
++//! Timing metrics are diagnostic only, so on wasm they degrade to zero
++//! instead of aborting rendering.
++
++#[cfg(not(target_arch = "wasm32"))]
++pub use std::time::Instant;
++
++#[cfg(target_arch = "wasm32")]
++#[derive(Clone, Copy, Debug)]
++pub struct Instant;
++
++#[cfg(target_arch = "wasm32")]
++impl Instant {
++    pub fn now() -> Self {
++        Instant
++    }
++
++    pub fn elapsed(&self) -> std::time::Duration {
++        std::time::Duration::ZERO
++    }
++}

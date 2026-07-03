@@ -1,4 +1,5 @@
 /target
 /pkg
 /test/output
+/vendor
 node_modules
