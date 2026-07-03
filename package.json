@@ -1,0 +1,33 @@
+{
+  "name": "mermaid-wasm-renderer",
+  "version": "0.1.0",
+  "description": "WASM bindings for mermaid-rs-renderer: fast Mermaid-to-SVG rendering in Node.js without a browser",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "pkg/mermaid_wasm_renderer.js",
+  "types": "pkg/mermaid_wasm_renderer.d.ts",
+  "files": [
+    "pkg/mermaid_wasm_renderer_bg.wasm",
+    "pkg/mermaid_wasm_renderer_bg.wasm.d.ts",
+    "pkg/mermaid_wasm_renderer.js",
+    "pkg/mermaid_wasm_renderer.d.ts"
+  ],
+  "scripts": {
+    "build": "wasm-pack build --target nodejs --release --out-dir pkg && cp README-npm.md pkg/README.md && rm -f pkg/.gitignore",
+    "test": "node test/smoke.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akashacms/mermaid-wasm-renderer.git"
+  },
+  "keywords": [
+    "mermaid",
+    "diagram",
+    "svg",
+    "wasm",
+    "renderer"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -8,13 +8,22 @@ It was created to replace the `@mermaid-js/mermaid-cli` dependency in [@akashacm
 
 ```
 Cargo.toml                  wasm-bindgen wrapper crate
+package.json                npm metadata for installing this repo from git
 src/lib.rs                  JS-facing API: renderSvg, renderSvgWithConfig, registerFont
 patches/                    WASM-support patch for the upstream renderer (see below)
 vendor/mermaid-rs-renderer/ clone of the upstream renderer (not committed; see setup)
-pkg/                        build output: the npm package (wasm + JS glue + .d.ts)
+pkg/                        build output: wasm + JS glue + .d.ts (committed, see below)
 test/smoke.mjs              Node.js smoke test
 README-npm.md               source of pkg/README.md (the npm-facing README)
 ```
+
+The `pkg/` build output is committed so that the package can be installed directly from the git repository without consumers needing a Rust toolchain:
+
+```sh
+npm install github:akashacms/mermaid-wasm-renderer
+```
+
+The top-level `package.json` exists for this git-install path (`main` points into `pkg/`). Publishing to the npm registry uses `pkg/package.json` instead (see Publishing). After rebuilding, commit the updated `pkg/` contents.
 
 ## Setting up the renderer source
 
@@ -62,11 +71,18 @@ rustup target add wasm32-unknown-unknown
 Build the npm package into `pkg/`:
 
 ```sh
-wasm-pack build --target nodejs --release --out-dir pkg
-cp README-npm.md pkg/README.md
+npm run build
 ```
 
-Note: `wasm-pack` copies this top-level `README.md` into `pkg/` as part of the build, so the `cp` afterwards is required to give the npm package its own README.
+which runs:
+
+```sh
+wasm-pack build --target nodejs --release --out-dir pkg
+cp README-npm.md pkg/README.md
+rm -f pkg/.gitignore
+```
+
+The `cp` is required because `wasm-pack` copies this top-level `README.md` into `pkg/` as part of the build, and the npm package needs its own README. The `rm` removes the `.gitignore` that `wasm-pack` generates, which would otherwise prevent committing `pkg/` (needed for git installs).
 
 ## Testing
 
@@ -79,9 +95,8 @@ Renders flowchart, sequence, class, and pie diagrams (with and without a registe
 ## Publishing
 
 ```sh
-wasm-pack build --target nodejs --release --out-dir pkg
-cp README-npm.md pkg/README.md
-node test/smoke.mjs
+npm run build
+npm test
 cd pkg && npm publish
 ```
 
