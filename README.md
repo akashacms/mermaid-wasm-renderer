@@ -33,7 +33,7 @@ The upstream renderer is not committed to this repository. Clone it yourself, ei
 
 ```sh
 git clone https://github.com/1jehuang/mermaid-rs-renderer vendor/mermaid-rs-renderer
-git -C vendor/mermaid-rs-renderer checkout e4b4987   # known-good commit for the patch
+git -C vendor/mermaid-rs-renderer checkout bac530c   # known-good commit for the patch (v0.3.0)
 git -C vendor/mermaid-rs-renderer apply "$(pwd)/patches/mermaid-rs-renderer-wasm.patch"
 ```
 
@@ -41,13 +41,13 @@ git -C vendor/mermaid-rs-renderer apply "$(pwd)/patches/mermaid-rs-renderer-wasm
 
 ```sh
 git clone https://github.com/1jehuang/mermaid-rs-renderer ../mermaid-rs-renderer
-git -C ../mermaid-rs-renderer checkout e4b4987
+git -C ../mermaid-rs-renderer checkout bac530c
 git -C ../mermaid-rs-renderer apply "$(pwd)/patches/mermaid-rs-renderer-wasm.patch"
 mkdir -p vendor
 ln -s ../../mermaid-rs-renderer vendor/mermaid-rs-renderer
 ```
 
-The `checkout e4b4987` pin is the commit the patch was generated against; upstream moves quickly, so the patch may need rebasing on newer commits (`git apply --3way` usually resolves it).
+The `checkout bac530c` pin is the commit the patch was generated against; upstream moves quickly, so the patch may need rebasing on newer commits (`git apply --3way` usually resolves it).
 
 ## Patches applied to the renderer
 

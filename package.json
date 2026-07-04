@@ -1,6 +1,6 @@
 {
   "name": "mermaid-wasm-renderer",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "WASM bindings for mermaid-rs-renderer: fast Mermaid-to-SVG rendering in Node.js without a browser",
   "license": "MIT",
   "type": "commonjs",

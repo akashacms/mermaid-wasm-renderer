@@ -112,7 +112,7 @@ dependencies = [
 
 [[package]]
 name = "mermaid-rs-renderer"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "fontdb",
@@ -127,7 +127,7 @@ dependencies = [
 
 [[package]]
 name = "mermaid-wasm-renderer"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "mermaid-rs-renderer",

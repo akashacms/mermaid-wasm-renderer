@@ -53,7 +53,7 @@ index a0f21e9..5c4b1a4 100644
      if let Some(theme_name) = parsed.theme.as_deref()
          && let Some(theme) = Theme::from_name(theme_name)
 diff --git a/src/layout/flowchart/edge_pipeline.rs b/src/layout/flowchart/edge_pipeline.rs
-index 127f27b..4bfcecf 100644
+index 4c64c2d..856f72e 100644
 --- a/src/layout/flowchart/edge_pipeline.rs
 +++ b/src/layout/flowchart/edge_pipeline.rs
 @@ -1,6 +1,6 @@
@@ -65,7 +65,7 @@ index 127f27b..4bfcecf 100644
  use crate::config::LayoutConfig;
  use crate::ir::{DiagramKind, Graph};
 diff --git a/src/layout/mod.rs b/src/layout/mod.rs
-index 5a37768..ed02c00 100644
+index a0edeb0..b8614b1 100644
 --- a/src/layout/mod.rs
 +++ b/src/layout/mod.rs
 @@ -58,7 +58,7 @@ use crate::theme::{Theme, adjust_color, parse_color_to_hsl};

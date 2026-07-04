@@ -8,6 +8,7 @@ This repository packages [mermaid-rs-renderer](https://github.com/1jehuang/merma
 
 Key design facts:
 
+- **Version policy: this package's version tracks the embedded mermaid-rs-renderer version.** When updating the vendored upstream to version X.Y.Z, set `version = "X.Y.Z"` in both the top-level `Cargo.toml` and the top-level `package.json`, then rebuild so the generated `pkg/package.json` picks it up. (`pkg/package.json` is generated from `Cargo.toml` by wasm-pack; never hand-edit it.)
 - Target is `wasm32-unknown-unknown` via wasm-bindgen/wasm-pack, **not** WASI. There is no filesystem inside the WASM module; anything file-like (fonts, config files) must be read by the JavaScript host and passed in as bytes/strings.
 - The upstream crate is used with `default-features = false`, which disables its `cli` (clap) and `png` (resvg/usvg) features. Output is SVG strings only.
 - Text measurement uses `fontdb`. Without fonts, upstream falls back to calibrated approximate metrics, so rendering works even with zero registered fonts; registering a font gives exact label sizing.
@@ -33,7 +34,7 @@ Two things that surprise people:
 
 ## Setting up vendor/ from scratch
 
-The pinned upstream commit that `patches/mermaid-rs-renderer-wasm.patch` was generated against is recorded in README.md ("Setting up the renderer source" section). As of this writing it is `e4b4987`.
+The pinned upstream commit that `patches/mermaid-rs-renderer-wasm.patch` was generated against is recorded in README.md ("Setting up the renderer source" section). As of this writing it is `bac530c` (v0.3.0).
 
 ```sh
 git clone https://github.com/1jehuang/mermaid-rs-renderer vendor/mermaid-rs-renderer
@@ -93,7 +94,9 @@ This is the most delicate maintenance task. Upstream moves quickly; the patch wi
 
    Any new `Instant` import in library code should be rewritten to `use crate::timing::Instant;` and becomes part of the patch.
 
-4. Verify both targets compile, then build and test end-to-end:
+4. Update the package version to match the new upstream version (see the version policy above): set `version` in the top-level `Cargo.toml` AND the top-level `package.json` to the upstream crate version (found in `vendor/mermaid-rs-renderer/Cargo.toml`). The `npm run build` in the next step regenerates `pkg/package.json` with the new version.
+
+5. Verify both targets compile, then build and test end-to-end:
 
    ```sh
    (cd vendor/mermaid-rs-renderer && cargo check --no-default-features --target wasm32-unknown-unknown)
@@ -105,7 +108,7 @@ This is the most delicate maintenance task. Upstream moves quickly; the patch wi
 
    The smoke test matters: compilation cannot catch runtime panics such as `Instant::now()` on wasm.
 
-5. Regenerate the patch from the vendor working tree. The `git add -N` (intent-to-add) is required so that NEW files (like `src/timing.rs`) appear in `git diff`:
+6. Regenerate the patch from the vendor working tree. The `git add -N` (intent-to-add) is required so that NEW files (like `src/timing.rs`) appear in `git diff`:
 
    ```sh
    cd vendor/mermaid-rs-renderer
@@ -114,7 +117,7 @@ This is the most delicate maintenance task. Upstream moves quickly; the patch wi
    cd ../..
    ```
 
-6. Sanity-check the regenerated patch against a pristine clone:
+7. Sanity-check the regenerated patch against a pristine clone:
 
    ```sh
    rm -rf /tmp/mrr-verify
@@ -124,9 +127,9 @@ This is the most delicate maintenance task. Upstream moves quickly; the patch wi
    git -C /tmp/mrr-verify apply "$(pwd)/patches/mermaid-rs-renderer-wasm.patch"
    ```
 
-7. Update the pinned commit hash in **README.md** (the "Setting up the renderer source" section) and in this file if the value above is stale.
+8. Update the pinned commit hash in **README.md** (the "Setting up the renderer source" section) and in this file if the value above is stale.
 
-8. Commit together: `patches/`, the rebuilt `pkg/`, README.md, and any wrapper changes. Never commit `vendor/`.
+9. Commit together: `patches/`, the rebuilt `pkg/`, README.md, `Cargo.toml`/`package.json` (version bump), and any wrapper changes. Never commit `vendor/`.
 
 ### If upstream absorbs the patch
 
