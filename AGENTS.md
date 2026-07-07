@@ -170,7 +170,7 @@ Defined in `src/lib.rs`, exported through the wasm-bindgen glue in `pkg/`:
 - `renderSvgWithConfig(source: string, configJson?: string, themePreset?: string): string` - `configJson` uses upstream's `--config` JSON schema; `themePreset` is one of `default | dark | forest | neutral | modern` and takes precedence over the config's `theme` name but is applied before `themeVariables`.
 - `registerFont(data: Uint8Array): void` - register TTF/OTF bytes; first registration also backs the generic CSS families.
 
-Errors are thrown as JavaScript `Error` (via `JsError`). Keep this API stable; @akashacms/diagrams-maker depends on all three functions.
+Errors are thrown as JavaScript `Error` (via `JsError`). Keep this API stable; @akashacms/diagram-makers depends on all three functions.
 
 ## Publishing
 

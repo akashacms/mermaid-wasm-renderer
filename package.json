@@ -15,7 +15,7 @@
   "scripts": {
     "build": "wasm-pack build --target nodejs --release --out-dir pkg && cp README-npm.md pkg/README.md && rm -f pkg/.gitignore",
     "test": "node test/smoke.mjs",
-    "dopublish": "npm publish --access public"
+    "dopublish": "npx README-npm.md pkg/README.md && cd pkg && npm publish --access public"
   },
   "repository": {
     "type": "git",
@@ -30,5 +30,8 @@
   ],
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "shx": "^0.4.0"
   }
 }

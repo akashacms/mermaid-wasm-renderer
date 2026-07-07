@@ -2,7 +2,7 @@
 
 This repository builds the [`mermaid-wasm-renderer`](README-npm.md) npm package: a WebAssembly build of [mermaid-rs-renderer](https://github.com/1jehuang/mermaid-rs-renderer) (a pure-Rust Mermaid renderer) with [wasm-bindgen](https://github.com/rustwasm/wasm-bindgen) bindings, so Node.js applications can render Mermaid diagrams to SVG in milliseconds without a browser, Puppeteer, or platform-specific binaries.
 
-It was created to replace the `@mermaid-js/mermaid-cli` dependency in [@akashacms/diagrams-maker](https://github.com/akashacms/plugins-diagrams), which spawns a headless Chromium per diagram.
+It was created to replace the `@mermaid-js/mermaid-cli` dependency in [@akashacms/diagram-makers](https://github.com/akashacms/plugins-diagrams), which spawns a headless Chromium per diagram.
 
 ## Repository layout
 

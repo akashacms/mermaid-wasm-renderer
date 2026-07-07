@@ -101,6 +101,10 @@ Note: upstream is under active development; visual output may not yet match merm
 
 The first render costs ~150 ms (one-time WASM/regex/font warm-up). Every render after that takes single-digit milliseconds. Rendering happens synchronously in-process — no child processes, no browser.
 
+## AkashaCMS
+
+This package was created to support the [AkashaCMS](https://akashacms.com) static website generating system. However, this package has no dependency on anything in the AkashaCMS ecosystem. Instead, the [@akashacms/diagram-makers](https://github.com/akashacms/plugins-diagrams) plugin uses `mermaid-wasm-renderer` for rendering Mermaid diagrams. The `mermaid-wasm-renderer` package should be usable in any Node.js project, and the WASM file it contains should be executable on any WASM runtime.
+
 ## License
 
 MIT. Rendering engine © the [mermaid-rs-renderer](https://github.com/1jehuang/mermaid-rs-renderer) contributors, also MIT.
