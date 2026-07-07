@@ -141,8 +141,10 @@ Prerequisites (one-time):
 
 ```sh
 rustup target add wasm32-unknown-unknown
-# wasm-pack: https://rustwasm.github.io/wasm-pack/installer/
+npm install   # provides wasm-pack and shx as devDependencies
 ```
+
+`wasm-pack` and `shx` are devDependencies, so `npm install` supplies them (in `node_modules/.bin`) and `npm run build` finds them on the npm-script PATH without a global install. `npm install` runs wasm-pack's postinstall, which downloads the wasm-pack binary; if your environment blocks install scripts, the npm shim downloads it lazily on first `wasm-pack` invocation instead. Either way, the Rust toolchain (`cargo`, `rustc`, and the `wasm32-unknown-unknown` target) must be installed separately — a devDependency cannot provide it.
 
 Build:
 
@@ -150,7 +152,7 @@ Build:
 npm run build
 ```
 
-This runs `wasm-pack build --target nodejs --release --out-dir pkg`, then copies `README-npm.md` over `pkg/README.md` (wasm-pack clobbers it with the root README), then deletes `pkg/.gitignore` (wasm-pack generates one containing `*`, which would prevent committing `pkg/`). If you invoke wasm-pack manually, do not forget those two follow-up steps.
+This runs `wasm-pack build --target nodejs --release --out-dir pkg`, then copies `README-npm.md` over `pkg/README.md` (wasm-pack clobbers it with the root README) via `shx cp`, then deletes `pkg/.gitignore` (wasm-pack generates one containing `*`, which would prevent committing `pkg/`) via `shx rm`. If you invoke wasm-pack manually, do not forget those two follow-up steps. `shx` keeps both cross-platform.
 
 The first build is slow (several minutes); wasm-pack also downloads a matching wasm-bindgen and wasm-opt on first use.
 

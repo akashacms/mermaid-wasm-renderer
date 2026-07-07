@@ -13,9 +13,9 @@
     "pkg/mermaid_wasm_renderer.d.ts"
   ],
   "scripts": {
-    "build": "wasm-pack build --target nodejs --release --out-dir pkg && cp README-npm.md pkg/README.md && rm -f pkg/.gitignore",
+    "build": "wasm-pack build --target nodejs --release --out-dir pkg && shx cp README-npm.md pkg/README.md && shx rm -f pkg/.gitignore",
     "test": "node test/smoke.mjs",
-    "dopublish": "npx shx cp README-npm.md pkg/README.md && cd pkg && npm publish --access public"
+    "dopublish": "cd pkg && npm publish --access public"
   },
   "repository": {
     "type": "git",
@@ -32,6 +32,7 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "shx": "^0.4.0"
+    "shx": "^0.4.0",
+    "wasm-pack": "^0.13.1"
   }
 }

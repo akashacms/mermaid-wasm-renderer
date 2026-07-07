@@ -65,8 +65,10 @@ Prerequisites:
 
 ```sh
 rustup target add wasm32-unknown-unknown
-# wasm-pack: https://rustwasm.github.io/wasm-pack/installer/
+npm install   # provides wasm-pack (and shx) as devDependencies
 ```
+
+`wasm-pack` is a devDependency, so `npm install` fetches it (into `node_modules/.bin`) and `npm run build` finds it without a global install. The Rust toolchain (`cargo`, `rustc`, and the `wasm32-unknown-unknown` target above) must still be installed separately.
 
 Build the npm package into `pkg/`:
 
@@ -78,11 +80,11 @@ which runs:
 
 ```sh
 wasm-pack build --target nodejs --release --out-dir pkg
-cp README-npm.md pkg/README.md
-rm -f pkg/.gitignore
+shx cp README-npm.md pkg/README.md
+shx rm -f pkg/.gitignore
 ```
 
-The `cp` is required because `wasm-pack` copies this top-level `README.md` into `pkg/` as part of the build, and the npm package needs its own README. The `rm` removes the `.gitignore` that `wasm-pack` generates, which would otherwise prevent committing `pkg/` (needed for git installs).
+The `shx cp` is required because `wasm-pack` copies this top-level `README.md` into `pkg/` as part of the build, and the npm package needs its own README. The `shx rm` removes the `.gitignore` that `wasm-pack` generates, which would otherwise prevent committing `pkg/` (needed for git installs). `shx` makes both steps cross-platform.
 
 ## Testing
 
