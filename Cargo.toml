@@ -6,6 +6,8 @@ edition = "2021"
 description = "WASM bindings for mermaid-rs-renderer: fast Mermaid-to-SVG rendering in Node.js without a browser"
 license = "MIT"
 repository = "https://github.com/akashacms/mermaid-wasm-renderer"
+# wasm-pack copies these into the generated pkg/package.json on every build.
+keywords = ["mermaid", "diagram", "svg", "wasm", "renderer"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]

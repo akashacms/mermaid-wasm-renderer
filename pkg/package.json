@@ -13,5 +13,12 @@
     "mermaid_wasm_renderer.d.ts"
   ],
   "main": "mermaid_wasm_renderer.js",
-  "types": "mermaid_wasm_renderer.d.ts"
+  "types": "mermaid_wasm_renderer.d.ts",
+  "keywords": [
+    "mermaid",
+    "diagram",
+    "svg",
+    "wasm",
+    "renderer"
+  ]
 }
