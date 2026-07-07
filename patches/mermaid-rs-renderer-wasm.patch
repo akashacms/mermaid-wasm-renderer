@@ -65,7 +65,7 @@ index 4c64c2d..856f72e 100644
  use crate::config::LayoutConfig;
  use crate::ir::{DiagramKind, Graph};
 diff --git a/src/layout/mod.rs b/src/layout/mod.rs
-index a0edeb0..b8614b1 100644
+index 502a720..b9ba55b 100644
 --- a/src/layout/mod.rs
 +++ b/src/layout/mod.rs
 @@ -58,7 +58,7 @@ use crate::theme::{Theme, adjust_color, parse_color_to_hsl};

@@ -34,7 +34,7 @@ Two things that surprise people:
 
 ## Setting up vendor/ from scratch
 
-The pinned upstream commit that `patches/mermaid-rs-renderer-wasm.patch` was generated against is recorded in README.md ("Setting up the renderer source" section). As of this writing it is `bac530c` (v0.3.0).
+The pinned upstream commit that `patches/mermaid-rs-renderer-wasm.patch` was generated against is recorded in README.md ("Setting up the renderer source" section). As of this writing it is `2f993bd` (v0.3.1).
 
 ```sh
 git clone https://github.com/1jehuang/mermaid-rs-renderer vendor/mermaid-rs-renderer

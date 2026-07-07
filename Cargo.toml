@@ -1,7 +1,7 @@
 [package]
 name = "mermaid-wasm-renderer"
 # Version policy: track the mermaid-rs-renderer version this package embeds.
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 description = "WASM bindings for mermaid-rs-renderer: fast Mermaid-to-SVG rendering in Node.js without a browser"
 license = "MIT"
