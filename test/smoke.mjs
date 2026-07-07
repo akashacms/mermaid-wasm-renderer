@@ -1,5 +1,5 @@
 // Smoke test: render several diagram types from Node.js via the WASM build.
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { createRequire } from 'node:module';
@@ -7,8 +7,22 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { renderSvg, renderSvgWithConfig, registerFont } = require('../pkg/mermaid_wasm_renderer.js');
 
-const outDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'output');
+const testDir = path.dirname(fileURLToPath(import.meta.url));
+const outDir = path.join(testDir, 'output');
 mkdirSync(outDir, { recursive: true });
+
+// Assert a rendered string looks like real SVG, not an error page or empty
+// output. This is deliberately lightweight: the goal is to catch WASM-only
+// runtime failures (panics, mistranslated code paths) that native `cargo
+// test` cannot see, not to validate visual fidelity.
+function assertLooksLikeSvg(label, svg) {
+    if (typeof svg !== 'string' || svg.length === 0) {
+        throw new Error(`${label}: renderer returned empty output`);
+    }
+    if (!svg.includes('<svg') || !svg.includes('</svg>')) {
+        throw new Error(`${label}: output does not look like SVG (no <svg>...</svg>)`);
+    }
+}
 
 const diagrams = {
     flowchart: `flowchart LR
@@ -47,9 +61,7 @@ for (const [name, source] of Object.entries(diagrams)) {
     const t0 = performance.now();
     const svg = renderSvg(source);
     const ms = (performance.now() - t0).toFixed(2);
-    if (!svg.startsWith('<svg') && !svg.includes('<svg')) {
-        throw new Error(`${name}: output does not look like SVG`);
-    }
+    assertLooksLikeSvg(name, svg);
     writeFileSync(path.join(outDir, `${name}.svg`), svg);
     console.log(`${name}: ${svg.length} bytes in ${ms} ms`);
 }
@@ -69,6 +81,59 @@ try {
     console.log('invalid input: rendered (renderer is lenient)');
 } catch (err) {
     console.log(`invalid input: threw as expected: ${String(err).slice(0, 80)}`);
+}
+
+// 5. Render the upstream fixture corpus through the WASM build.
+//
+// vendor/ is NOT committed (it is recreated from a clone + patch), so this
+// step only runs in a dev checkout that has set it up. Its purpose is to
+// exercise every diagram type upstream ships against the WASM build: if the
+// WASM translation mishandles a code path that the native Rust version
+// handles (e.g. a runtime panic), rendering that fixture throws or returns
+// non-SVG, and we fail. We only check that each result is real SVG, not that
+// it matches any reference output.
+const fixturesDir = path.join(
+    testDir,
+    '..',
+    'vendor',
+    'mermaid-rs-renderer',
+    'tests',
+    'fixtures',
+);
+
+if (existsSync(fixturesDir)) {
+    const fixtures = [];
+    for (const entry of readdirSync(fixturesDir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        const typeDir = path.join(fixturesDir, entry.name);
+        for (const file of readdirSync(typeDir)) {
+            if (file.endsWith('.mmd')) {
+                fixtures.push(path.join(typeDir, file));
+            }
+        }
+    }
+    fixtures.sort();
+
+    let passed = 0;
+    const failures = [];
+    for (const file of fixtures) {
+        const label = path.relative(fixturesDir, file);
+        const source = readFileSync(file, 'utf8');
+        try {
+            const svg = renderSvg(source);
+            assertLooksLikeSvg(label, svg);
+            passed += 1;
+        } catch (err) {
+            failures.push(`  ${label}: ${String(err.message ?? err).slice(0, 120)}`);
+        }
+    }
+
+    console.log(`upstream fixtures: ${passed}/${fixtures.length} rendered as SVG`);
+    if (failures.length > 0) {
+        throw new Error(`fixture rendering failed:\n${failures.join('\n')}`);
+    }
+} else {
+    console.log('upstream fixtures: skipped (vendor/ not present)');
 }
 
 console.log('OK');
